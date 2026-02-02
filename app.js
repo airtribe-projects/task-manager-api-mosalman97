@@ -1,8 +1,11 @@
 import express from "express";
+import dotenv from "dotenv";
 import router from "./routes/taskRoutes.js";
 
+dotenv.config();
+
 const app = express();
-const port = 3222;
+const port = process.env.PORT || 3222;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -15,4 +18,4 @@ app.listen(port, (err) => {
 	console.log(`Server is listening on ${port}`);
 });
 
-
+export default app;

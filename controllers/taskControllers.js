@@ -1,10 +1,9 @@
 import { tasks } from "../models/taskModel.js";
 
-let idCounter = 120;
-
 const createTask = (req, res) => {
 	try {
-		const { title, description, completed } = req.body;
+		const { title, description, completed, priority } = req.body;
+		const created = new Date();
 		if (!title) {
 			return res.status(400).json({
 				error: "title is required",
@@ -15,6 +14,11 @@ const createTask = (req, res) => {
 				error: "description is required",
 			});
 		}
+		if (!priority) {
+			return res.status(400).json({
+				error: "priority is required",
+			});
+		}
 		if (typeof completed !== "boolean") {
 			return res.status(400).json({
 				error: "completed must be a boolean value",
@@ -22,13 +26,15 @@ const createTask = (req, res) => {
 		}
 
 		const newTask = {
-			id: idCounter++,
+			id: Date.now().toString(),
 			title,
 			description,
-			completed,
+			completed: completed ?? false,
+			priority: priority ?? "low",
+			createdAt: created,
 		};
 		tasks.push(newTask);
-		res.status(200).json({
+		res.status(201).json({
 			data: newTask,
 			message: "create new task successfully",
 		});
@@ -38,11 +44,33 @@ const createTask = (req, res) => {
 		});
 	}
 };
+
 const getTasks = (req, res) => {
 	try {
+		const { completed } = req.query;
+
+		const sortTasks = tasks.sort(
+			(itemOne, itemTwo) => itemOne.createdAt - itemTwo.createdAt,
+		);
+
+		let filteredTasks = [...sortTasks];
+
+		if (completed !== undefined) {
+			// filtering useing completed
+			if (completed != "true" && completed != "false") {
+				return res.status(400).json({
+					error: "completed must be true or false",
+				});
+			}
+			filteredTasks = tasks
+				.filter((item) => item.completed.toString() === completed)
+				.sort(
+					(itemOne, itemTwo) => itemOne.createdAt - itemTwo.createdAt,
+				);
+		}
 		res.status(200).json({
-			data: tasks,
-			message: "Tasks fetched successfully",
+			data: filteredTasks,
+			message: "tasks fetched successfully",
 		});
 	} catch (error) {
 		res.status(500).json({
@@ -50,15 +78,140 @@ const getTasks = (req, res) => {
 		});
 	}
 };
+
 const getTaskById = (req, res) => {
-	const { id } = req.params;
-	if(!id){
-		return res.status(400).json({
-			error: "title is required",
+	try {
+		const { id } = req.params;
+		if (!id) {
+			return res.status(400).json({
+				error: "task id is missing",
+			});
+		}
+		const taskId = Number(id);
+
+		if (Number.isNaN(taskId)) {
+			return res.status(400).json({
+				error: "task id must be a number",
+			});
+		}
+
+		const task = tasks.find((item) => item.id === taskId);
+
+		if (!task) {
+			return res.status(404).json({
+				error: "Task not found",
+			});
+		}
+
+		return res.status(200).json({
+			message: "task fetched successfully",
+			data: task,
+		});
+	} catch (error) {
+		res.status(500).json({
+			error: "failed to fetch task",
 		});
 	}
 };
-const updateTask = (req, res) => {};
-const deleteTask = (req, res) => {};
 
-export { createTask, getTaskById, getTasks, updateTask, deleteTask };
+const updateTask = (req, res) => {
+	try {
+		const { id } = req.params;
+		if (!id) {
+			return res.status(400).json({
+				error: "task id is missing",
+			});
+		}
+		const updates = req.body;
+
+		const taskId = Number(id);
+		if (Number.isNaN(taskId)) {
+			return res.status(400).json({
+				error: "task id must be a number",
+			});
+		}
+
+		const task = tasks.find((item) => item.id === taskId);
+
+		if (!task) {
+			return res.status(404).json({
+				error: "task not found",
+			});
+		}
+
+		Object.assign(task, updates);
+
+		return res.status(200).json({
+			message: "task updated successfully",
+			data: task,
+		});
+	} catch (error) {
+		res.status(500).json({
+			error: "failed to update task",
+		});
+	}
+};
+const deleteTask = (req, res) => {
+	try {
+		const { id } = req.params;
+		if (!id) {
+			return res.status(400).json({
+				error: "task id is missing",
+			});
+		}
+		const taskId = Number(id);
+
+		if (Number.isNaN(taskId)) {
+			return res.status(400).json({
+				error: "task id must be a number",
+			});
+		}
+
+		const taskFilter = tasks.filter((item) => item.id !== taskId);
+
+		return res.status(200).json({
+			message: "task deleted successfully",
+			data: taskFilter,
+		});
+	} catch (error) {
+		res.status(500).json({
+			error: "failed to delete task",
+		});
+	}
+};
+
+const getTaskByPriority = (req, res) => {
+	const { level } = req.params;
+	try {
+		if (level !== undefined) {
+			const allowed = ["low", "medium", "high"];
+			if (!allowed.includes(level.toLowerCase())) {
+				return res.status(400).json({
+					error: "priority must be one of low, medium, high",
+				});
+			}
+		}
+
+		let filterTasks = tasks.filter(
+			(item) => item.priority.toLowerCase() === level.toLowerCase(),
+		);
+
+		res.status(200).json({
+			data: filterTasks,
+			message: `tasks fetched by level ${level} successfully`,
+		});
+	} catch (error) {
+		res.status(500).json({
+			error: "failed to delete task",
+		});
+	}
+};
+
+export {
+	createTask,
+	getTaskById,
+	getTasks,
+	updateTask,
+	deleteTask,
+	getTaskByPriority,
+};
