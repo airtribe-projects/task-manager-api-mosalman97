@@ -1,4 +1,5 @@
 import { tasks } from "../models/taskModel.js";
+import { v4 as uuidv4 } from "uuid";
 
 const createTask = (req, res) => {
 	try {
@@ -19,14 +20,14 @@ const createTask = (req, res) => {
 				error: "priority is required",
 			});
 		}
-		if (typeof completed !== "boolean") {
+		if (completed !== undefined && typeof completed === "boolean") {
 			return res.status(400).json({
 				error: "completed must be a boolean value",
 			});
 		}
 
 		const newTask = {
-			id: Date.now().toString(),
+			id: uuidv4(),
 			title,
 			description,
 			completed: completed ?? false,
@@ -87,6 +88,11 @@ const getTaskById = (req, res) => {
 				error: "task id is missing",
 			});
 		}
+
+		if (!/^\d+$/.test(id)) {
+			return res.status(400).json({ error: "task id must be a number" });
+		}
+
 		const taskId = Number(id);
 
 		if (Number.isNaN(taskId)) {
@@ -139,7 +145,18 @@ const updateTask = (req, res) => {
 			});
 		}
 
-		Object.assign(task, updates);
+		const allowedUpdates = [
+			"title",
+			"description",
+			"completed",
+			"priority",
+		];
+
+		for (const key in updates) {
+			if (allowedUpdates.includes(key)) {
+				task[key] = updates[key];
+			}
+		}
 
 		return res.status(200).json({
 			message: "task updated successfully",

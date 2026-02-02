@@ -27,7 +27,7 @@ A RESTful API for managing tasks, built with Node.js and Express. This project a
 
 3. **Set up environment variables:**
     - Create a `.env` file in the root directory.
-    - Add any required environment variables (e.g., `PORT=3222`).
+    - Add any required environment variables (e.g., `PORT=3000`).
 
 ## Usage
 
@@ -37,12 +37,12 @@ A RESTful API for managing tasks, built with Node.js and Express. This project a
 npm start
 ```
 
-The API will be available at `http://localhost:3222` (or your configured port).
+The API will be available at `http://localhost:3000` (or your configured port).
 
 ### Example: Create a Task
 
 ```bash
-curl -X POST http://localhost:3222/api/v1/tasks \
+curl -X POST http://localhost:3000/api/v1/tasks \
   -H "Content-Type: application/json" \
   -d '{"title": "Buy groceries", "description": "Milk, eggs, bread", "completed": false,
   "priority":"high"}'
@@ -51,7 +51,7 @@ curl -X POST http://localhost:3222/api/v1/tasks \
 ### Example: Get All Tasks
 
 ```bash
-curl http://localhost:3222/api/v1/tasks
+curl http://localhost:3000/api/v1/tasks
 ```
 
 ## API Endpoints
